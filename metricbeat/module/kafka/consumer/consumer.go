@@ -26,6 +26,7 @@ type MetricSet struct {
 	client          *http.Client
 	host    string
 	cluster    string
+	lags_per_partition bool
 	consumers []string
 }
 
@@ -37,6 +38,7 @@ func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
 	config := struct {
 		Host      string `yaml:"host"`
 		Cluster   string `yaml:"cluster"`
+		Lags_per_partition   bool `yaml:"lags_per_partition"`
 		Consumers []string `yaml:"consumers"`
 	}{}
 
@@ -49,6 +51,7 @@ func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
 		client:          &http.Client{Timeout: base.Module().Config().Timeout},
 		host: config.Host,
 		consumers: config.Consumers,
+		lags_per_partition: config.Lags_per_partition,
 		cluster: config.Cluster,
 	}, nil
 }
@@ -96,12 +99,12 @@ func (m *MetricSet) Fetch() ([]common.MapStr, error) {
 			continue
 		}
 
-		event, err := eventMapping(resp_body)
+		consumer_events, err := eventMapping(resp_body, m.lags_per_partition)
 		if err != nil {
 			continue
 		}
 
-		events = append(events, event)
+		events = append(events, consumer_events...)
 
 	}
 

@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"encoding/json"
-	"strconv"
 )
 
 type ConsumerLagsResponse struct {
@@ -36,7 +35,9 @@ type PartitionStatus struct {
 
 
 // Map responseBody to common.MapStr
-func eventMapping(responseBody []byte) (common.MapStr, error) {
+func eventMapping(responseBody []byte, lags_per_partition bool) ([]common.MapStr, error) {
+
+	events := []common.MapStr{}
 
 	debugf("Got reponse body: ", string(responseBody[:]))
 
@@ -60,31 +61,25 @@ func eventMapping(responseBody []byte) (common.MapStr, error) {
 	event["max_lag"] = consumer_lags_response.Status.Maxlag
 	event["total_lag"] = consumer_lags_response.Status.Totallag
 
+	events = append(events, event)
 
-	for _, partition_status := range consumer_lags_response.Status.Partitions {
-		subelement_key := partition_status.Topic + "_" + strconv.Itoa(partition_status.Partition)
-		event[subelement_key] = partition_status
-		/*
-		if nested, exists := event[consumer_lags_response.Status.Group]; exists {
-			if nested, ok := nested.(map[string]interface{}); ok {
-				//add to existing map
-				nested[subelement_key] = partition_status
-			} else {
-				//debugf("The alias '%s' already exists and is not nested, skipping...", aliasStructure[0])
-			}
-		} else {
-			//init map and add value
-			event[consumer_lags_response.Status.Group] = map[string]interface{}{subelement_key: partition_status}
+	if lags_per_partition {
+		for _, partition_status := range consumer_lags_response.Status.Partitions {
+			event := make(map[string]interface{})
+			event["cluster"] = consumer_lags_response.Status.Cluster
+			event["group"] = consumer_lags_response.Status.Group
+			event["topic"] = partition_status.Topic
+			event["partition"] = partition_status.Partition
+			event["status"] = partition_status.Status
+			event["start"] = partition_status.Start
+			event["end"] = partition_status.End
+			events = append(events, event)
 		}
-		*/
 	}
 
-	return event, nil
+	return events, nil
 }
 
-func convertLagStausToEvent(status map[string]interface{}) {
-
-}
 
 type ConsumerGroupsResponse struct {
 	Error bool `json:"error"`
