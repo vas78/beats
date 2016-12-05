@@ -21,7 +21,7 @@ type Status struct {
 	Complete bool `json:"complete"`
 	Partitions []PartitionStatus `json:"partitions"`
 	Partition_count int `json:"partition_count"`
-	Maxlag int `json:"maxlag"`
+	Maxlag PartitionStatus `json:"maxlag"`
 	Totallag int `json:"totallag"`
 }
 
@@ -58,8 +58,8 @@ func eventMapping(responseBody []byte, lags_per_partition bool) ([]common.MapStr
 	event["status"] = consumer_lags_response.Status.Status
 	event["complete"] = consumer_lags_response.Status.Complete
 	event["partition_count"] = consumer_lags_response.Status.Partition_count
-	event["max_lag"] = consumer_lags_response.Status.Maxlag
 	event["total_lag"] = consumer_lags_response.Status.Totallag
+	event["max_lag"] = consumer_lags_response.Status.Maxlag.End["lag"]
 
 	events = append(events, event)
 
