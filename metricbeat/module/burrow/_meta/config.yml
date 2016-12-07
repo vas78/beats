@@ -1,0 +1,8 @@
+#---- burrow kafka offsets --------
+- enabled: true
+  period: 60s
+  module: burrow
+  metricsets: [consumer]
+  host: "localhost:8081"
+  #cluster: "cluster1"
+  #consumers: ["consumer1", "consumer2"]

@@ -10,12 +10,12 @@ import (
 )
 
 var (
-	debugf = logp.MakeDebug("kafka-consumer")
+	debugf = logp.MakeDebug("burrow-consumer")
 )
 
 // init registers the partition MetricSet with the central registry.
 func init() {
-	if err := mb.Registry.AddMetricSet("kafka", "consumer", New); err != nil {
+	if err := mb.Registry.AddMetricSet("burrow", "consumer", New); err != nil {
 		panic(err)
 	}
 }
@@ -33,7 +33,7 @@ type MetricSet struct {
 // New create a new instance of the partition MetricSet
 func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
 
-	logp.Warn("EXPERIMENTAL: The kafka consumer metricset is experimental")
+	logp.Warn("EXPERIMENTAL: The burrow consumer metricset is experimental")
 
 	config := struct {
 		Host      string `yaml:"host"`
