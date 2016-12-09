@@ -1,0 +1,10 @@
+=== yarn cluster MetricSet
+
+This is the cluster metricset of the module yarn.
+
+[float]
+=== Features
+
+
+[float]
+=== Exposed fields, Dashboards, Indexes, etc.
