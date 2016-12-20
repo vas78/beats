@@ -8,9 +8,9 @@ import (
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/vas78/beats/metricbeat/mb"
 	"github.com/vas78/beats/metricbeat/mb/parse"
-//	"io/ioutil"
 	"io/ioutil"
 	"encoding/json"
+	"crypto/tls"
 )
 
 const (
@@ -31,7 +31,6 @@ var (
 		DefaultPath:   defaultPath,
 	}.Build()
 )
-//https://{host}/proxy/{app_id}/metrics/json
 
 // init registers the MetricSet with the central registry.
 func init() {
@@ -53,6 +52,7 @@ func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
 		Host     string `config:"host"`
 		User     string        `config:"user"`
 		Password string        `config:"password"`
+		Insecure bool     `config:"insecure"`
 	}{
 		User:  "",
 		Password: "",
@@ -62,9 +62,13 @@ func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
 		return nil, err
 	}
 
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify : config.Insecure},
+	}
+
 	return &MetricSet{
 		BaseMetricSet:   base,
-		client:          &http.Client{Timeout: base.Module().Config().Timeout},
+		client:          &http.Client{Transport: tr, Timeout: base.Module().Config().Timeout},
 	}, nil
 
 }
