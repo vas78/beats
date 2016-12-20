@@ -1,0 +1,11 @@
+- module: yarn
+  metricsets: ["cluster", "spark"]
+  enabled: true
+  period: 10s
+  hosts: ["https://localhost:8090"]
+  username: user1
+  password: password1
+  insecure: true
+  queue: "queue1"
+  running: true
+
