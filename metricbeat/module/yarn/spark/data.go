@@ -52,8 +52,8 @@ func schema(appId string, appName string) s.Schema {
 
 			},
 		),
-		"message_processing": c.Dict("timers",
-			s.Schema{"response_time_ms": c.Dict(
+		"dag_message_processing": c.Dict("timers",
+			s.Schema{"time_ms": c.Dict(
 					appId + ".driver.DAGScheduler.messageProcessingTime",
 						s.Schema{
 							"max": c.Int("max"),
