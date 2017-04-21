@@ -2,7 +2,6 @@ package http
 
 import (
 	"bytes"
-	"expvar"
 	"fmt"
 	"net/url"
 	"strings"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
+	"github.com/elastic/beats/libbeat/monitoring"
 
 	"github.com/elastic/beats/packetbeat/procs"
 	"github.com/elastic/beats/packetbeat/protos"
@@ -33,7 +33,7 @@ const (
 )
 
 var (
-	unmatchedResponses = expvar.NewInt("http.unmatched_responses")
+	unmatchedResponses = monitoring.NewInt(nil, "http.unmatched_responses")
 )
 
 type stream struct {
@@ -542,10 +542,8 @@ func (http *httpPlugin) collectHeaders(m *message) interface{} {
 			if strings.ToLower(name) == "content-length" {
 				continue
 			}
-			if http.splitCookie {
-				if name == cookie {
-					hdrs[name] = splitCookiesHeader(string(value))
-				}
+			if http.splitCookie && name == cookie {
+				hdrs[name] = splitCookiesHeader(string(value))
 			} else {
 				hdrs[name] = value
 			}

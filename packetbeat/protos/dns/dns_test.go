@@ -63,7 +63,7 @@ func newDNS(verbose bool) *dnsPlugin {
 		logp.LogInit(logp.LOG_EMERG, "", false, true, []string{"dns"})
 	}
 
-	results := &publish.ChanTransactions{make(chan common.MapStr, 100)}
+	results := &publish.ChanTransactions{Channel: make(chan common.MapStr, 100)}
 	cfg, _ := common.NewConfigFrom(map[string]interface{}{
 		"ports":               []int{serverPort},
 		"include_authorities": true,
@@ -274,7 +274,7 @@ func TestRRsToMapStrsWithOPTRecord(t *testing.T) {
 	r.Preference = 10
 	r.Mx = "mx.miek.nl."
 
-	// The OPT record is a psuedo-record so it doesn't become a real record
+	// The OPT record is a pseudo-record so it doesn't become a real record
 	// in our conversion, and there will be 1 entry instead of 2.
 	mapStrs := rrsToMapStrs([]mkdns.RR{o, r})
 	assert.Len(t, mapStrs, 1)

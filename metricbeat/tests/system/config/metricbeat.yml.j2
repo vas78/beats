@@ -37,8 +37,16 @@ metricbeat.modules:
   period: {{ m.period }}
   {% endif -%}
 
+  {% if m.path -%}
+  metrics_path: {{ m.path }}
+  {% endif -%}
+
   {% if m.timeout -%}
   timeout: {{ m.timeout }}
+  {% endif -%}
+
+  {% if m.namespace -%}
+  namespace: {{ m.namespace }}
   {% endif -%}
 
   {% if m.processes -%}
@@ -78,7 +86,17 @@ metricbeat.modules:
   {{ k }}: {{ v }}
   {% endfor %}
   {% endif -%}
+  {% if m.additional_content -%}
+  {{ m.additional_content }}
+  {% endif -%}
 {%- endfor %}
+
+{% if reload -%}
+metricbeat.config.modules:
+  path: {{ reload_path }}
+  reload.period: 1s
+  reload.enabled: true
+{% endif -%}
 
 #================================ General =====================================
 
@@ -98,16 +116,6 @@ tags: [
       {%- endfor -%}
   {%- endif -%}
 ]
-
-{% if geoip_paths is not none %}
-geoip:
-  paths: [
-      {%- for path in geoip_paths -%}
-          "{{ beat.working_dir + '/' + path }}"
-          {%- if not loop.last %}, {% endif -%}
-      {%- endfor -%}
-  ]
-{%- endif %}
 
 {%- if processors %}
 

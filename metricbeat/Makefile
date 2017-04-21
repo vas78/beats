@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Name can be overwritten, as Metricbeat is also a library
-BEATNAME?=metricbeat
+BEAT_NAME?=metricbeat
 BEAT_DESCRIPTION?=Metricbeat sends metrics to Elasticsearch.
-SYSTEM_TESTS=true
+SYSTEM_TESTS?=true
 TEST_ENVIRONMENT?=true
-GOPACKAGES=$(shell go list ${BEAT_DIR}/... | grep -v /vendor/)
+GOPACKAGES=$(shell go list ${BEAT_PATH}/... | grep -v /vendor/)
 ES_BEATS?=..
 
 TARGETS?="windows/amd64 windows/386 darwin/amd64"
@@ -14,10 +14,17 @@ CGO=true
 
 # Metricbeat can only be cross-compiled on platforms not requiring CGO.
 GOX_OS=solaris netbsd linux windows
-GOX_FLAGS='-arch=amd64 386 arm ppc64 ppc64le'
+GOX_FLAGS=-arch="amd64 386 arm ppc64 ppc64le"
 
 
 include ${ES_BEATS}/libbeat/scripts/Makefile
+
+.PHONY: clean
+clean::
+	# Clean generated dashbord directories
+	rm -rf _meta/kibana/dashboard _meta/kibana/search _meta/kibana/visualization
+	# Clean module docs
+	rm -rf docs/modules
 
 # Collects all module dashboards
 .PHONY: kibana
@@ -39,28 +46,32 @@ fields:
 collect-docs: python-env
 	-rm -rf docs/modules
 	mkdir -p docs/modules
-	. ${PYTHON_ENV}/bin/activate; python ${ES_BEATS}/metricbeat/scripts/docs_collector.py --beat ${BEATNAME}
+	. ${PYTHON_ENV}/bin/activate; python ${ES_BEATS}/metricbeat/scripts/docs_collector.py --beat ${BEAT_NAME}
 
 # Collects all module configs
 .PHONY: configs
 configs: python-env
-	. ${PYTHON_ENV}/bin/activate; python ${ES_BEATS}/metricbeat/scripts/config_collector.py --beat ${BEATNAME} $(PWD) > _meta/beat.yml
-	. ${PYTHON_ENV}/bin/activate; python ${ES_BEATS}/metricbeat/scripts/config_collector.py --beat ${BEATNAME} --full $(PWD) > _meta/beat.full.yml
+	cat ${ES_BEATS}/metricbeat/_meta/common.yml > _meta/beat.yml
+	. ${PYTHON_ENV}/bin/activate; python ${ES_BEATS}/script/config_collector.py --beat ${BEAT_NAME} $(PWD) >> _meta/beat.yml
+	cat ${ES_BEATS}/metricbeat/_meta/common.full.yml > _meta/beat.full.yml
+	. ${PYTHON_ENV}/bin/activate; python ${ES_BEATS}/script/config_collector.py --beat ${BEAT_NAME} --full $(PWD) >> _meta/beat.full.yml
 
 # Generates imports for all modules and metricsets
 .PHONY: imports
 imports:
 	mkdir -p include
-	python ${ES_BEATS}/metricbeat/scripts/generate_imports.py ${BEAT_DIR} ${BEATNAME} > include/list.go
+	python ${ES_BEATS}/metricbeat/scripts/generate_imports.py ${BEAT_PATH} > include/list.go
 
 # This is called by the beats packer before building starts
 .PHONY: before-build
 before-build:
+ifeq ($(BEAT_NAME), metricbeat)
 	# disable the system/load metricset on windows
 	sed -i.bk 's/- load/#- load/' $(PREFIX)/metricbeat-win.yml
 	rm $(PREFIX)/metricbeat-win.yml.bk
 	sed -i.bk 's/- load/#- load/' $(PREFIX)/metricbeat-win.full.yml
 	rm $(PREFIX)/metricbeat-win.full.yml.bk
+endif
 
 # Runs all collection steps and updates afterwards
 .PHONY: collect
@@ -77,3 +88,14 @@ create-metricset:
 generate-json: build-image
 	 ${DOCKER_COMPOSE} run beat go test -tags=integration github.com/elastic/beats/metricbeat/module/... -data
 
+.PHONY: run-module
+run-module: ## @testing Runs the given module with exposing the port. Needs $MODULE and $PORT as param
+run-module:
+	${DOCKER_COMPOSE} build ${MODULE}
+	${DOCKER_COMPOSE} run -p ${PORT}:${PORT} ${MODULE}
+
+.PHONY: test-module
+test-module: ## @testing Tests the given module. Needs $MODULE as param an run-module must be started first.
+test-module: python-env
+	go test -tags=integration ${BEAT_PATH}/module/${MODULE}/... -v
+	. ${PYTHON_ENV}/bin/activate && INTEGRATION_TESTS=1 nosetests tests/system/test_${MODULE}.py
