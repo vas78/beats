@@ -92,25 +92,8 @@ func (m *MetricSet) Fetch() ([]common.MapStr, error) {
 	jobList := getSparkJobTrackingUrls(m)
 
 	for _, job := range jobList {
-		debugf("Tracking URL: ", job.TrackingUrl)
-		req, err := http.NewRequest("GET", job.TrackingUrl + "metrics/json", nil)
-		if m.HostData().User != "" || m.HostData().Password != "" {
-			req.SetBasicAuth(m.HostData().User, m.HostData().Password)
-		}
-		resp, err := m.client.Do(req)
+		resp_body, err := GetResponse(m, job.TrackingUrl + "metrics/json")
 		if err != nil {
-			_ = fmt.Errorf("Error making http request: %#v", err)
-			continue
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != 200 {
-			_ = fmt.Errorf("HTTP error %d: %s", resp.StatusCode, resp.Status)
-			continue
-		}
-		resp_body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			_ = fmt.Errorf("Error converting response body: %#v", err)
 			continue
 		}
 
@@ -123,30 +106,13 @@ func (m *MetricSet) Fetch() ([]common.MapStr, error) {
 
 		event := eventMappingDriverStats(job, driverStats)
 		event["application_name"] = job.Name
-		event["type"] = "driver"
+		event["metric_source"] = "driver"
 
 		events = append(events, event)
 
 		if m.executor_stats {
-			debugf("Tracking URL: ", job.TrackingUrl)
-			req, err := http.NewRequest("GET", job.TrackingUrl + "api/v1/applications/" + job.Id + "/executors", nil)
-			if m.HostData().User != "" || m.HostData().Password != "" {
-				req.SetBasicAuth(m.HostData().User, m.HostData().Password)
-			}
-			resp, err := m.client.Do(req)
+			resp_body, err := GetResponse(m, job.TrackingUrl + "api/v1/applications/" + job.Id + "/executors")
 			if err != nil {
-				_ = fmt.Errorf("Error making http request: %#v", err)
-				continue
-			}
-			defer resp.Body.Close()
-
-			if resp.StatusCode != 200 {
-				_ = fmt.Errorf("HTTP error %d: %s", resp.StatusCode, resp.Status)
-				continue
-			}
-			resp_body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				_ = fmt.Errorf("Error converting response body: %#v", err)
 				continue
 			}
 
@@ -160,7 +126,7 @@ func (m *MetricSet) Fetch() ([]common.MapStr, error) {
 			for _, execStat := range executorStats {
 				event := eventMappingExecutorStats(execStat)
 				event["application_name"] = job.Name
-				event["type"] = "executor"
+				event["metric_source"] = "executor"
 
 				events = append(events, event)
 			}
@@ -172,4 +138,29 @@ func (m *MetricSet) Fetch() ([]common.MapStr, error) {
 		return nil, fmt.Errorf("No events could be fetched, please check the log for errors")
 	}
 
+}
+
+//helper function that GETs data over http
+func GetResponse(m *MetricSet, Url string) ([]byte, error) {
+
+	debugf("URL: ", Url)
+	req, err := http.NewRequest("GET", Url, nil)
+	if m.HostData().User != "" || m.HostData().Password != "" {
+		req.SetBasicAuth(m.HostData().User, m.HostData().Password)
+	}
+	resp, err := m.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Error making http request: %#v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("HTTP error %d: %s", resp.StatusCode, resp.Status)
+	}
+	resp_body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("Error converting response body: %#v", err)
+	}
+
+	return resp_body, nil
 }
