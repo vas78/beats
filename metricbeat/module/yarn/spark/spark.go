@@ -46,6 +46,7 @@ type MetricSet struct {
 	client          *http.Client      // HTTP client that is reused across requests
 	queue           string
 	running         bool
+	executor_stats  bool
 }
 
 // New create a new instance of the MetricSet
@@ -58,6 +59,7 @@ func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
 		Insecure bool     `config:"insecure"`
 		Queue string     `config:"queue"`
 		Running bool     `config:"running"`
+		ExecutorStats bool     `config:"executorStats"`
 	}{
 		User:  "",
 		Password: "",
@@ -77,6 +79,7 @@ func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
 		client:          &http.Client{Transport: tr, Timeout: base.Module().Config().Timeout},
 		queue:       config.Queue,
 		running:     config.Running,
+		executor_stats:     config.ExecutorStats,
 	}, nil
 
 }
@@ -111,17 +114,57 @@ func (m *MetricSet) Fetch() ([]common.MapStr, error) {
 			continue
 		}
 
-		appStats := map[string]interface{}{}
-		err = json.Unmarshal(resp_body, &appStats)
+		driverStats := map[string]interface{}{}
+		err = json.Unmarshal(resp_body, &driverStats)
 		if err != nil {
 			_ = fmt.Errorf("Cannot unmarshal json response: %s", err)
 			continue
 		}
 
-		event := eventMapping(job, appStats)
+		event := eventMappingDriverStats(job, driverStats)
 		event["application_name"] = job.Name
+		event["type"] = "driver"
 
 		events = append(events, event)
+
+		if m.executor_stats {
+			debugf("Tracking URL: ", job.TrackingUrl)
+			req, err := http.NewRequest("GET", job.TrackingUrl + "api/v1/applications/" + job.Id + "/executors", nil)
+			if m.HostData().User != "" || m.HostData().Password != "" {
+				req.SetBasicAuth(m.HostData().User, m.HostData().Password)
+			}
+			resp, err := m.client.Do(req)
+			if err != nil {
+				_ = fmt.Errorf("Error making http request: %#v", err)
+				continue
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != 200 {
+				_ = fmt.Errorf("HTTP error %d: %s", resp.StatusCode, resp.Status)
+				continue
+			}
+			resp_body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				_ = fmt.Errorf("Error converting response body: %#v", err)
+				continue
+			}
+
+			executorStats := []map[string]interface{}{}
+			err = json.Unmarshal(resp_body, &executorStats)
+			if err != nil {
+				_ = fmt.Errorf("Cannot unmarshal json response: %s", err)
+				continue
+			}
+
+			for _, execStat := range executorStats {
+				event := eventMappingExecutorStats(execStat)
+				event["application_name"] = job.Name
+				event["type"] = "executor"
+
+				events = append(events, event)
+			}
+		}
 	}
 	if events != nil {
 		return events, nil

@@ -24,7 +24,7 @@ type Apps struct {
 	Apps AppResponse `json:"apps"`
 }
 
-func schema(appId string, appName string) s.Schema {
+func schemaDriverStats(appId string, appName string) s.Schema {
 	return s.Schema{
 		"block_manager": c.Dict("gauges",
 			s.Schema{"disk_space_used": c.Dict(
@@ -121,8 +121,33 @@ func schema(appId string, appName string) s.Schema {
 	}
 }
 
-func eventMapping(app App, appStats map[string]interface{}) common.MapStr {
-	return schema(app.Id, app.Name).Apply(appStats)
+func eventMappingDriverStats(app App, driverStats map[string]interface{}) common.MapStr {
+	return schemaDriverStats(app.Id, app.Name).Apply(driverStats)
+}
+
+func schemaExecutorStats() s.Schema {
+	return s.Schema{
+		"id": c.Str("id"),
+		"rddBlocks": c.Int("rddBlocks"),
+		"memoryUsed": c.Int("memoryUsed"),
+		"diskUsed": c.Int("diskUsed"),
+		"totalCores": c.Int("totalCores"),
+		"maxTasks": c.Int("maxTasks"),
+		"activeTasks": c.Int("activeTasks"),
+		"failedTasks": c.Int("failedTasks"),
+		"completedTasks": c.Int("completedTasks"),
+		"totalTasks": c.Int("totalTasks"),
+		"totalDuration": c.Int("totalDuration"),
+		"totalGCTime": c.Int("totalGCTime"),
+		"totalInputBytes": c.Int("totalInputBytes"),
+		"totalShuffleRead": c.Int("totalShuffleRead"),
+		"totalShuffleWrite": c.Int("totalShuffleWrite"),
+		"maxMemory": c.Int("maxMemory"),
+	}
+}
+
+func eventMappingExecutorStats(executorStats map[string]interface{}) common.MapStr {
+	return schemaExecutorStats().Apply(executorStats)
 }
 
 func getSparkJobTrackingUrls(m *MetricSet) []App {

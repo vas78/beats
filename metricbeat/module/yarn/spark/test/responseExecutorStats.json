@@ -1,0 +1,71 @@
+
+[ {
+    "id" : "driver",
+    "hostPort" : "10.201.12.12:49127",
+    "isActive" : true,
+    "rddBlocks" : 18,
+    "memoryUsed" : 171479,
+    "diskUsed" : 0,
+    "totalCores" : 0,
+    "maxTasks" : 0,
+    "activeTasks" : 0,
+    "failedTasks" : 0,
+    "completedTasks" : 0,
+    "totalTasks" : 0,
+    "totalDuration" : 0,
+    "totalGCTime" : 0,
+    "totalInputBytes" : 0,
+    "totalShuffleRead" : 0,
+    "totalShuffleWrite" : 0,
+    "maxMemory" : 384093388,
+    "executorLogs" : {
+        "stderr" : "https://worker102:8044/node/containerlogs/container_e62_1491825685224_0581_01_000001/user/stderr?start=-4096",
+        "stdout" : "https://worker102:8044/node/containerlogs/container_e62_1491825685224_0581_01_000001/user/stdout?start=-4096"
+    }
+}, {
+    "id" : "5",
+    "hostPort" : "worker201:59394",
+    "isActive" : true,
+    "rddBlocks" : 16,
+    "memoryUsed" : 168210,
+    "diskUsed" : 0,
+    "totalCores" : 1,
+    "maxTasks" : 1,
+    "activeTasks" : 1,
+    "failedTasks" : 0,
+    "completedTasks" : 8692,
+    "totalTasks" : 8693,
+    "totalDuration" : 259307,
+    "totalGCTime" : 1666,
+    "totalInputBytes" : 0,
+    "totalShuffleRead" : 96626482,
+    "totalShuffleWrite" : 163537289,
+    "maxMemory" : 384093388,
+    "executorLogs" : {
+        "stdout" : "https://worker201:8044/node/containerlogs/container_e62_1491825685224_0581_01_000007/user/stdout?start=-4096",
+        "stderr" : "https://worker201:8044/node/containerlogs/container_e62_1491825685224_0581_01_000007/user/stderr?start=-4096"
+    }
+}, {
+    "id" : "4",
+    "hostPort" : "worker102:39058",
+    "isActive" : true,
+    "rddBlocks" : 16,
+    "memoryUsed" : 168210,
+    "diskUsed" : 0,
+    "totalCores" : 1,
+    "maxTasks" : 1,
+    "activeTasks" : 1,
+    "failedTasks" : 0,
+    "completedTasks" : 8493,
+    "totalTasks" : 8494,
+    "totalDuration" : 262519,
+    "totalGCTime" : 1883,
+    "totalInputBytes" : 0,
+    "totalShuffleRead" : 90686109,
+    "totalShuffleWrite" : 159896879,
+    "maxMemory" : 384093388,
+    "executorLogs" : {
+        "stdout" : "https://worker102:8044/node/containerlogs/container_e62_1491825685224_0581_01_000006/user/stdout?start=-4096",
+        "stderr" : "https://worker102:8044/node/containerlogs/container_e62_1491825685224_0581_01_000006/user/stderr?start=-4096"
+    }
+} ]
