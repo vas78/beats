@@ -18,7 +18,7 @@ type Status struct {
 	Cluster string `json:"cluster"`
 	Group string `json:"group"`
 	Status string `json:"status"`
-	Complete bool `json:"complete"`
+	Complete float64 `json:"complete"`
 	Partitions []PartitionStatus `json:"partitions"`
 	Partition_count int `json:"partition_count"`
 	Maxlag PartitionStatus `json:"maxlag"`
@@ -29,6 +29,7 @@ type PartitionStatus struct {
 	Topic string `json:"topic"`
 	Partition int `json:"partition"`
 	Status string `json:"status"`
+	Owner string `json:"owner"`
 	Start map[string]interface{} `json:"start"`
 	End map[string]interface{} `json:"end"`
 }
@@ -56,7 +57,7 @@ func eventMapping(responseBody []byte, lags_per_partition bool) ([]common.MapStr
 	event["cluster"] = consumer_lags_response.Status.Cluster
 	event["group"] = consumer_lags_response.Status.Group
 	event["status"] = consumer_lags_response.Status.Status
-	event["complete"] = consumer_lags_response.Status.Complete
+	event["complete_perc"] = consumer_lags_response.Status.Complete
 	event["partition_count"] = consumer_lags_response.Status.Partition_count
 	event["total_lag"] = consumer_lags_response.Status.Totallag
 	event["max_lag"] = consumer_lags_response.Status.Maxlag.End["lag"]
@@ -71,6 +72,7 @@ func eventMapping(responseBody []byte, lags_per_partition bool) ([]common.MapStr
 			event["topic"] = partition_status.Topic
 			event["partition"] = partition_status.Partition
 			event["status"] = partition_status.Status
+			event["owner"] = partition_status.Owner
 			event["start"] = partition_status.Start
 			event["end"] = partition_status.End
 			events = append(events, event)

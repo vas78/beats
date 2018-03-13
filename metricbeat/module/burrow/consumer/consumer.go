@@ -78,7 +78,7 @@ func (m *MetricSet) Fetch() ([]common.MapStr, error) {
 	}
 	debugf("Consumer groups to be fetched: ", connected_consumers)
 	for _, consumer := range connected_consumers {
-		url := "http://" + m.host + "/v2/kafka/" + m.cluster + "/consumer/" + consumer + "/lag"
+		url := "http://" + m.host + "/v3/kafka/" + m.cluster + "/consumer/" + consumer + "/lag"
 		debugf("Fetching url: ", url)
 		req, err := http.NewRequest("GET", url, nil)
 		resp, err := m.client.Do(req)
